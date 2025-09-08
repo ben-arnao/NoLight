@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using RogueLike2D.Stage;
 using RogueLike2D.Characters;
+using RogueLike2D.ScriptableObjects;
 
 namespace RogueLike2D.Battle
 {
@@ -17,9 +18,20 @@ namespace RogueLike2D.Battle
         private BattleType battleType;
         private Action<bool> onBattleEnded;
 
+        private CharacterRuntime currentActor;
+        private AbilitySO pendingAbility;
+        private CharacterRuntime pendingTarget;
+        private bool awaitingPlayerInput = false;
+        private int turnCounter = 0;
+
         public event Action<List<CharacterRuntime>> OnTurnOrderUpdated; // Hook for UI
         public event Action OnBattleStarted;
-        public event Action OnBattleFinished;
+        public event Action<bool> OnBattleFinished;
+
+        // UI prompts
+        public event Action<CharacterRuntime, List<AbilitySO>, List<CharacterRuntime>, List<CharacterRuntime>> OnPlayerActionPrompt;
+        public event Action<AbilitySO, List<CharacterRuntime>> OnTargetPrompt;
+        public event Action<int, CharacterRuntime, List<CharacterRuntime>> OnTurnCounterUpdated;
 
         public void BeginBattle(BattleType type, List<CharacterRuntime> player, List<CharacterRuntime> enemies, Action<bool> onEnded)
         {
@@ -38,43 +50,108 @@ namespace RogueLike2D.Battle
             OnBattleStarted?.Invoke();
             UpdateUIOrder();
 
-            // Auto-run placeholder loop (single pass per character) for skeleton.
-            // In a real game, you'd hook this into UI input for player actions.
-            StartCoroutine(RunAutoBattleCoroutine());
+            StartCoroutine(RunBattleLoop());
         }
 
-        private System.Collections.IEnumerator RunAutoBattleCoroutine()
+        private System.Collections.IEnumerator RunBattleLoop()
         {
-            int safeGuard = 200; // prevent infinite loops
+            int safeGuard = 1000; // prevent infinite loops
             while (safeGuard-- > 0)
             {
-                var next = turnSystem.GetNextActor();
-                if (next == null)
+                currentActor = turnSystem.GetNextActor();
+                if (currentActor == null)
                 {
                     Debug.Log("No next actor; battle ends as draw (placeholder).");
                     EndBattle(false);
                     yield break;
                 }
 
-                next.BeginTurn();
+                turnCounter++;
+                currentActor.BeginTurn();
 
-                // Simple AI: attack random opposing target
-                bool isPlayer = playerTeam.Contains(next);
-                var targets = isPlayer ? enemyTeam : playerTeam;
-                var anyAlive = targets.Exists(t => t.IsAlive);
-                if (!anyAlive)
+                // Early victory check for opposing team dead (could happen from start-of-turn effects)
+                if (enemyTeam.TrueForAll(e => e == null || !e.IsAlive))
                 {
-                    EndBattle(isPlayer); // last actor's team wins
+                    EndBattle(true);
+                    yield break;
+                }
+                if (playerTeam.TrueForAll(p => p == null || !p.IsAlive))
+                {
+                    EndBattle(false);
                     yield break;
                 }
 
-                var target = GetRandomAlive(targets);
-                resolver.BasicAttack(next, target);
-                next.EndTurn();
+                bool isPlayer = playerTeam.Contains(currentActor);
+                OnTurnCounterUpdated?.Invoke(turnCounter, currentActor, turnSystem.PeekUpcomingOrder());
+
+                if (isPlayer)
+                {
+                    awaitingPlayerInput = true;
+                    pendingAbility = null;
+                    pendingTarget = null;
+
+                    // Present abilities and targets
+                    OnPlayerActionPrompt?.Invoke(currentActor, currentActor.EquippedAbilities, enemyTeam, playerTeam);
+
+                    // Wait for ability selection
+                    yield return new WaitUntil(() => !awaitingPlayerInput || pendingAbility != null);
+
+                    if (!awaitingPlayerInput)
+                    {
+                        // Battle externally ended
+                        yield break;
+                    }
+
+                    // Validate cooldown
+                    if (pendingAbility == null || currentActor.IsOnCooldown(pendingAbility.Id))
+                    {
+                        // skip turn on invalid selection
+                        Debug.LogWarning("Invalid or cooldown ability selection; skipping action.");
+                    }
+                    else
+                    {
+                        // If ability needs a target, ensure we have one
+                        if (pendingAbility.Targeting == AbilityTargeting.SingleEnemy || pendingAbility.Targeting == AbilityTargeting.SingleAlly)
+                        {
+                            // If no target selected yet, ask now
+                            if (pendingTarget == null)
+                            {
+                                var candidates = pendingAbility.Targeting == AbilityTargeting.SingleEnemy
+                                    ? enemyTeam.FindAll(c => c != null && c.IsAlive)
+                                    : playerTeam.FindAll(c => c != null && c.IsAlive);
+
+                                OnTargetPrompt?.Invoke(pendingAbility, candidates);
+                                yield return new WaitUntil(() => !awaitingPlayerInput || pendingTarget != null);
+                            }
+                        }
+                        else if (pendingAbility.Targeting == AbilityTargeting.Self)
+                        {
+                            pendingTarget = currentActor;
+                        }
+
+                        // Execute
+                        var allies = isPlayer ? playerTeam : enemyTeam;
+                        var enemies = isPlayer ? enemyTeam : playerTeam;
+                        resolver.ResolveAbility(pendingAbility, currentActor, allies, enemies, pendingTarget);
+                    }
+
+                    // Clear selection
+                    pendingAbility = null;
+                    pendingTarget = null;
+                    awaitingPlayerInput = false;
+                }
+                else
+                {
+                    // Enemy AI
+                    resolver.DemonAct(currentActor, enemyTeam, playerTeam);
+                    yield return new WaitForSeconds(0.2f);
+                }
+
+                currentActor.EndTurn();
 
                 // Remove dead characters (optional)
-                playerTeam.RemoveAll(c => !c.IsAlive);
-                enemyTeam.RemoveAll(c => !c.IsAlive);
+                playerTeam.RemoveAll(c => c == null || !c.IsAlive);
+                enemyTeam.RemoveAll(c => c == null || !c.IsAlive);
 
                 if (playerTeam.Count == 0)
                 {
@@ -90,16 +167,47 @@ namespace RogueLike2D.Battle
                 turnSystem.UpdateOrder(playerTeam, enemyTeam);
                 UpdateUIOrder();
 
-                yield return new WaitForSeconds(0.2f); // slow down auto loop
+                yield return null;
             }
 
             // Fallback
             EndBattle(false);
         }
 
+        public void TryChooseAbility(AbilitySO ability)
+        {
+            if (!awaitingPlayerInput || currentActor == null) return;
+            if (ability == null) return;
+            if (currentActor.IsOnCooldown(ability.Id)) return;
+
+            pendingAbility = ability;
+
+            // If target is required, prompt immediately
+            if (ability.Targeting == AbilityTargeting.SingleEnemy || ability.Targeting == AbilityTargeting.SingleAlly)
+            {
+                var candidates = ability.Targeting == AbilityTargeting.SingleEnemy
+                    ? enemyTeam.FindAll(c => c != null && c.IsAlive)
+                    : playerTeam.FindAll(c => c != null && c.IsAlive);
+
+                OnTargetPrompt?.Invoke(ability, candidates);
+            }
+            else if (ability.Targeting == AbilityTargeting.Self)
+            {
+                pendingTarget = currentActor;
+            }
+        }
+
+        public void TryChooseTarget(CharacterRuntime target)
+        {
+            if (!awaitingPlayerInput || currentActor == null || pendingAbility == null) return;
+            if (target == null || !target.IsAlive) return;
+
+            pendingTarget = target;
+        }
+
         private CharacterRuntime GetRandomAlive(List<CharacterRuntime> list)
         {
-            var alive = list.FindAll(c => c.IsAlive);
+            var alive = list.FindAll(c => c != null && c.IsAlive);
             if (alive.Count == 0) return null;
             int idx = UnityEngine.Random.Range(0, alive.Count);
             return alive[idx];
@@ -113,7 +221,7 @@ namespace RogueLike2D.Battle
         private void EndBattle(bool playerWon)
         {
             StopAllCoroutines();
-            OnBattleFinished?.Invoke();
+            OnBattleFinished?.Invoke(playerWon);
             onBattleEnded?.Invoke(playerWon);
         }
 

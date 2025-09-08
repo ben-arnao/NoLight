@@ -23,6 +23,14 @@ namespace RogueLike2D.Characters
         // Cooldowns for abilities/items (placeholder)
         private Dictionary<string, int> cooldowns = new Dictionary<string, int>();
 
+        // Simple runtime combat flags/effects
+        public int GuardAmount { get; private set; } = 0;              // flat reduction to incoming damage
+        public int GuardTurnsRemaining { get; private set; } = 0;      // turns remaining for guard
+        public bool BlockAllDamage { get; private set; } = false;      // blocks all incoming damage
+        public int PendingHealNextTurn { get; private set; } = 0;      // heal at next BeginTurn
+        public int NextAttackDamageModifier { get; private set; } = 0; // additive to next outgoing attack
+        public int MarkStacks { get; set; } = 0;                        // simple mark for targeted synergies
+
         public bool IsAlive => Stats.CurrentHP > 0;
 
         public CharacterRuntime(CharacterDefinitionSO def)
@@ -49,7 +57,21 @@ namespace RogueLike2D.Characters
 
         public void BeginTurn()
         {
-            // TODO: Tick status effects that act at turn start.
+            // Apply any pending start-of-turn effects
+            if (PendingHealNextTurn > 0)
+            {
+                Heal(PendingHealNextTurn);
+                PendingHealNextTurn = 0;
+            }
+
+            // Meditation-style full block ends at start of the user's next turn
+            if (BlockAllDamage)
+            {
+                BlockAllDamage = false;
+            }
+
+            // Guard typically lasts through opponents' actions until end of our next turn;
+            // we leave decrement to EndTurn to cover that window.
         }
 
         public void EndTurn()
@@ -59,12 +81,31 @@ namespace RogueLike2D.Characters
             foreach (var key in keys)
                 cooldowns[key] = Mathf.Max(0, cooldowns[key] - 1);
 
+            // Decay guard
+            if (GuardTurnsRemaining > 0)
+            {
+                GuardTurnsRemaining--;
+                if (GuardTurnsRemaining <= 0)
+                {
+                    GuardAmount = 0;
+                }
+            }
+
             // TODO: Tick status effects that act at turn end.
         }
 
         public void TakeDamage(int amount)
         {
+            if (!IsAlive) return;
+
+            if (BlockAllDamage)
+                return;
+
             int dmg = Mathf.Max(0, amount - Stats.Defense);
+
+            if (GuardAmount > 0 && GuardTurnsRemaining > 0)
+                dmg = Mathf.Max(0, dmg - GuardAmount);
+
             Stats.CurrentHP = Mathf.Max(0, Stats.CurrentHP - dmg);
         }
 
@@ -81,6 +122,30 @@ namespace RogueLike2D.Characters
         public bool IsOnCooldown(string id)
         {
             return cooldowns.TryGetValue(id, out int turns) && turns > 0;
+        }
+
+        public void ApplyGuard(int amount, int turns)
+        {
+            GuardAmount = Mathf.Max(GuardAmount, amount);
+            GuardTurnsRemaining = Mathf.Max(GuardTurnsRemaining, turns);
+        }
+
+        public void ApplyBlockAllUntilNextTurn(int healNextTurnAmount)
+        {
+            BlockAllDamage = true;
+            PendingHealNextTurn = Mathf.Max(PendingHealNextTurn, healNextTurnAmount);
+        }
+
+        public void AddNextAttackModifier(int delta)
+        {
+            NextAttackDamageModifier += delta;
+        }
+
+        public int ConsumeNextAttackModifier()
+        {
+            int v = NextAttackDamageModifier;
+            NextAttackDamageModifier = 0;
+            return v;
         }
 
         public static List<CharacterRuntime> BuildRuntimeSquad(List<CharacterDefinitionSO> defs)

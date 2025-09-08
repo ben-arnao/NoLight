@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using RogueLike2D.Stage;
 using RogueLike2D.ScriptableObjects;
+using RogueLike2D.Characters;
+using RogueLike2D.Content;
 
 namespace RogueLike2D.Systems
 {
@@ -36,10 +38,17 @@ namespace RogueLike2D.Systems
 
         public List<CharacterDefinitionSO> GenerateEnemiesForEncounter(BattleType type, int seed, int stageIndex, int encounterIndex)
         {
-            // Placeholder enemy generation: return 4 copies of a dummy CharacterDefinitionSO if found.
-            // In production, you would pull from a database of enemy definitions filtered by stage and difficulty.
             var list = new List<CharacterDefinitionSO>();
-            // TODO: Replace with real enemy SOs. For now return empty list; BattleManager will handle nulls.
+
+            // First battle of the first run: all 3 demons
+            if (stageIndex == 0 && encounterIndex == 0 && type == BattleType.Normal)
+            {
+                var demon = ContentFactory.CreateDemonDefinition();
+                list.Add(demon);
+                list.Add(ContentFactory.CreateDemonDefinition());
+                list.Add(ContentFactory.CreateDemonDefinition());
+            }
+
             return list;
         }
     }
