@@ -155,7 +155,7 @@ namespace RogueLike2D.UI
                 closeRect.anchorMax = new Vector2(1f, 1f);
                 closeRect.pivot = new Vector2(1f, 1f);
                 closeRect.anchoredPosition = new Vector2(-16, -16);
-                closeRect.sizeDelta = new Vector2(48, 48);
+                closeRect.sizeDelta = new Vector2(96, 48);
 
                 var closeImg = closeGO.AddComponent<Image>();
                 closeImg.color = new Color(0, 0, 0, 0);
@@ -178,11 +178,11 @@ namespace RogueLike2D.UI
                 closeTextRect.anchorMax = new Vector2(1, 1);
                 closeTextRect.offsetMin = Vector2.zero;
                 closeTextRect.offsetMax = Vector2.zero;
-                closeText.text = "X";
+                closeText.text = "Exit";
                 closeText.alignment = TextAnchor.MiddleCenter;
                 closeText.color = Color.white;
                 closeText.font = font;
-                closeText.fontSize = 24;
+                closeText.fontSize = 20;
                 closeText.fontStyle = FontStyle.Bold;
                 closeText.raycastTarget = false;
 
