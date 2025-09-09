@@ -278,10 +278,16 @@ namespace RogueLike2D.UI
         public void QuitGame()
         {
             Debug.Log("Quit requested from Main Menu.");
+
 #if UNITY_EDITOR
+            // Stop Play mode when running inside the Editor.
             UnityEditor.EditorApplication.isPlaying = false;
 #else
+            // Request application quit for builds. Some platforms or build configurations
+            // may not immediately terminate the process via Application.Quit(),
+            // so follow up with Environment.Exit as a fallback to ensure the app exits.
             Application.Quit();
+            System.Environment.Exit(0);
 #endif
         }
     }
