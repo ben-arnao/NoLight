@@ -1,0 +1,18 @@
+I inspected the four files you added (SaveSystem.cs, SeasonManager.cs, StageGenerator.cs, WeightedRandom.cs).
+None of those files reference System.Security.Cryptography.SHA256Managed, so no edits are required in them.
+
+To fix the IL2CPP build error you described we need to find and update every location that directly constructs SHA256Managed (or otherwise depends on that concrete type) and replace it with the supported abstract factory usage:
+
+- Replace "new SHA256Managed()" with "SHA256.Create()".
+- Ensure the file has "using System.Security.Cryptography;" instead of referencing the concrete implementation's namespace.
+- If any third-party package uses SHA256Managed, update or patch that package similarly.
+
+Please add to the chat any files that contain "SHA256Managed" (including files under Assets, Assets/Plugins, or packages in the repository). To find them locally, run this command from the repo root:
+
+git grep -n "SHA256Managed"
+
+If you prefer a Windows-native search (fallback), you can run:
+
+findstr /spin /c:"SHA256Managed" *
+
+After you add the files that reference SHA256Managed here I will produce precise SEARCH/REPLACE edits to replace "new SHA256Managed()" with "SHA256.Create()" and adjust using directives as needed.
