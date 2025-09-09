@@ -55,8 +55,13 @@ namespace RogueLike2D.Core
 
         private void Start()
         {
-            // Show the main menu on play (if present in scene).
+            // Show or create the main menu on play.
             var mainMenu = FindObjectOfType<MainMenuUI>();
+            if (mainMenu == null)
+            {
+                var go = new GameObject("MainMenuUI");
+                mainMenu = go.AddComponent<MainMenuUI>();
+            }
             if (mainMenu != null)
             {
                 mainMenu.ShowMain();
