@@ -72,6 +72,10 @@ namespace RogueLike2D.Core
         private void Start()
         {
             Debug.Log("[GameManager] Start");
+            // Ensure file logger initialized and write a baseline marker for startup.
+            FileLogger.Initialize();
+            FileLogger.EnsureBaselineMarkers("GameManager.Start");
+            Debug.Log($"[GameManager] Logging to: {FileLogger.GetLogFilePath()}");
             // Show or create the main menu on play.
             var mainMenu = FindObjectOfType<MainMenuUI>();
             if (mainMenu == null)

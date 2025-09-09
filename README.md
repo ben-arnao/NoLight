@@ -51,8 +51,16 @@ Debug logs
     - On Windows this is typically C:\Users\<YourUser>\AppData\LocalLow\<CompanyName>\<ProductName>\Logs\debug.log
 - Behavior:
   - Logs are cleared on each app start (fresh log per session).
+  - A baseline line is guaranteed to be written on startup and when the Main Menu is shown:
+    - [BASELINE] Application alive - GameManager.Start
+    - [BASELINE] Application alive - MainMenuUI.ShowMain
   - All Unity Console messages are mirrored to this file with timestamps and frame counts; errors include stack traces.
   - Startup, menu initialization, and UI interactions (Start Run, View Collection, Exit) are explicitly logged.
+  - The log target path is printed at startup (e.g., "[GameManager] Logging to: <path>").
 - Troubleshooting:
   - If the main menu appears unresponsive, click "Exit" and check the log for lines starting with [MainMenuUI] and [GameManager].
   - Confirm that "Application.Quit()" or "EditorApplication.isPlaying = false" was invoked when pressing Exit.
+
+Running tests
+- Open Unity Editor and go to Window > General > Test Runner.
+- Select the EditMode tab and run FileLoggerTests. You should see the test pass and a debug.log containing a [BASELINE] line.

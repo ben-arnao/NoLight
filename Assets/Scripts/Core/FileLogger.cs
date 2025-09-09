@@ -21,6 +21,13 @@ namespace RogueLike2D.Core
             Initialize();
         }
 
+        // Extra safety: ensure we initialize even earlier on supported platforms.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
+        private static void EnsureVeryEarlyInit()
+        {
+            Initialize();
+        }
+
         public static void Initialize()
         {
             if (_initialized) return;
@@ -180,5 +187,26 @@ namespace RogueLike2D.Core
 
         public static string GetLogDirectory() => _logDir;
         public static string GetLogFilePath() => _logFilePath;
+
+        // Writes a guaranteed baseline line to the log file and Console.
+        // Safe to call multiple times; will ensure initialization first.
+        public static void EnsureBaselineMarkers(string context = null)
+        {
+            try
+            {
+                Initialize();
+                lock (_lock)
+                {
+                    if (_writer != null)
+                    {
+                        _writer.WriteLine($"[BASELINE][{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] Application alive{(string.IsNullOrEmpty(context) ? "" : $" - {context}")}");
+                        _writer.Flush();
+                    }
+                }
+            }
+            catch { /* ignore */ }
+
+            Debug.Log($"[FileLogger] Baseline marker written{(string.IsNullOrEmpty(context) ? "" : $" ({context})")}. Path: {_logFilePath}");
+        }
     }
 }

@@ -43,6 +43,7 @@ namespace RogueLike2D.UI
         public void ShowMain()
         {
             Debug.Log("[MainMenuUI] ShowMain");
+            FileLogger.EnsureBaselineMarkers("MainMenuUI.ShowMain");
             EnsureBuilt();
             if (mainPanel) mainPanel.SetActive(true);
             if (rosterPanel) rosterPanel.SetActive(false);
