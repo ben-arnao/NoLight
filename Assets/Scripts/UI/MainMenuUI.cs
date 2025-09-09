@@ -159,8 +159,11 @@ namespace RogueLike2D.UI
 
                 var closeImg = closeGO.AddComponent<Image>();
                 closeImg.color = new Color(0, 0, 0, 0);
+                closeImg.raycastTarget = true;
 
                 var btn = closeGO.AddComponent<Button>();
+                btn.targetGraphic = closeImg;
+                btn.interactable = true;
                 var btnColors = btn.colors;
                 btnColors.normalColor = new Color(0, 0, 0, 0);
                 btnColors.highlightedColor = new Color(1f, 1f, 1f, 0.1f);
@@ -181,6 +184,7 @@ namespace RogueLike2D.UI
                 closeText.font = font;
                 closeText.fontSize = 24;
                 closeText.fontStyle = FontStyle.Bold;
+                closeText.raycastTarget = false;
 
                 closeButton = btn;
             }
@@ -188,7 +192,11 @@ namespace RogueLike2D.UI
             if (closeButton != null)
             {
                 closeButton.onClick.RemoveAllListeners();
-                closeButton.onClick.AddListener(QuitGame);
+                // Add a small debug log and call QuitGame to ensure the click handler is robust.
+                closeButton.onClick.AddListener(() => { Debug.Log("Close button clicked - quitting"); QuitGame(); });
+                closeButton.interactable = true;
+                var imgComp = closeButton.GetComponent<Image>();
+                if (imgComp != null) imgComp.raycastTarget = true;
             }
         }
 
