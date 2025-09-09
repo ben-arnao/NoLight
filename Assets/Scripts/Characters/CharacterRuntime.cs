@@ -64,6 +64,13 @@ namespace RogueLike2D.Characters
                 PendingHealNextTurn = 0;
             }
 
+            // Passive: regenerate at start of turn (e.g., Warrior passive)
+            if (SelectedPassive != null && SelectedPassive.Id == "warrior_regen")
+            {
+                int regen = SelectedPassive.BasePower > 0 ? SelectedPassive.BasePower : 1;
+                Heal(regen);
+            }
+
             // Meditation-style full block ends at start of the user's next turn
             if (BlockAllDamage)
             {

@@ -29,7 +29,10 @@ namespace RogueLike2D.Content
                 CreateAbility("warrior_power_strike", "Power Strike", "Consume a Mark (if present) to deal 5-10 damage; otherwise light hit.", AbilityTargeting.SingleEnemy, basePower: 0, cooldown: 1),
             };
 
-            def.Passives = new List<AbilitySO>();
+            def.Passives = new List<AbilitySO>
+            {
+                CreateAbility("warrior_regen", "Regeneration", "Regenerate 1 HP at start of each turn.", AbilityTargeting.Self, basePower: 1, cooldown: 0)
+            };
             def.PermanentItems = new List<PermanentItemSO>();
             return def;
         }
