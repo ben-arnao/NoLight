@@ -29,5 +29,11 @@ namespace RogueLike2D.UI
             if (rosterPanel) rosterPanel.SetActive(false);
             if (collectionPanel) collectionPanel.SetActive(true);
         }
+
+        private void Start()
+        {
+            // Ensure the main menu is visible when the scene starts.
+            ShowMain();
+        }
     }
 }

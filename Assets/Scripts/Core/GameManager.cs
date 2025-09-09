@@ -6,6 +6,7 @@ using RogueLike2D.Systems;
 using RogueLike2D.Stage;
 using RogueLike2D.Characters;
 using RogueLike2D.ScriptableObjects;
+using RogueLike2D.UI;
 
 namespace RogueLike2D.Core
 {
@@ -54,6 +55,13 @@ namespace RogueLike2D.Core
 
         private void Start()
         {
+            // Show the main menu on play (if present in scene).
+            var mainMenu = FindObjectOfType<MainMenuUI>();
+            if (mainMenu != null)
+            {
+                mainMenu.ShowMain();
+            }
+
             // TODO: Hook up to main menu to call StartNewRun with selected squad.
         }
 
