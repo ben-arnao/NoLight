@@ -1,0 +1,16 @@
+Please add the following files to the chat so I can determine whether your Unity project already has a build script (and, if needed, which files would need editing). Only these files are the most likely places for a build script or CI workflow:
+
+- Assets/Editor/BuildScript.cs
+- Assets/Editor/BuildPlayer.cs
+- BuildScripts/Build.cs
+- Tools/Build/Build.cs
+- build.bat
+- build.ps1
+- build.sh
+- .github/workflows/unity-ci.yml
+- .gitlab-ci.yml
+- azure-pipelines.yml
+- .circleci/config.yml
+- package.json
+
+If you don't have any of those files, tell me and I will propose where to add a build script (Editor/Build or a CI workflow). Once you add the files you want me to inspect, I'll check them and tell you whether a build script exists and what to change.
