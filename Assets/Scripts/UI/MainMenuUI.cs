@@ -25,20 +25,24 @@ namespace RogueLike2D.UI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureMenuOnLoad()
         {
+            Debug.Log("[MainMenuUI] EnsureMenuOnLoad invoked after scene load");
             var existing = UnityEngine.Object.FindObjectOfType<MainMenuUI>();
             if (existing == null)
             {
+                Debug.Log("[MainMenuUI] No MainMenuUI found in scene. Creating one.");
                 var go = new GameObject("MainMenuUI");
                 existing = go.AddComponent<MainMenuUI>();
             }
             if (existing != null)
             {
+                Debug.Log("[MainMenuUI] Calling ShowMain()");
                 existing.ShowMain();
             }
         }
 
         public void ShowMain()
         {
+            Debug.Log("[MainMenuUI] ShowMain");
             EnsureBuilt();
             if (mainPanel) mainPanel.SetActive(true);
             if (rosterPanel) rosterPanel.SetActive(false);
@@ -47,6 +51,7 @@ namespace RogueLike2D.UI
 
         public void ShowRoster()
         {
+            Debug.Log("[MainMenuUI] ShowRoster");
             EnsureBuilt();
             if (mainPanel) mainPanel.SetActive(false);
             if (rosterPanel) rosterPanel.SetActive(true);
@@ -55,6 +60,7 @@ namespace RogueLike2D.UI
 
         public void ShowCollection()
         {
+            Debug.Log("[MainMenuUI] ShowCollection");
             EnsureBuilt();
             if (mainPanel) mainPanel.SetActive(false);
             if (rosterPanel) rosterPanel.SetActive(false);
@@ -63,6 +69,7 @@ namespace RogueLike2D.UI
 
         private void Start()
         {
+            Debug.Log("[MainMenuUI] Start");
             // Ensure the main menu is visible when the scene starts.
             EnsureBuilt();
             ShowMain();
@@ -70,16 +77,23 @@ namespace RogueLike2D.UI
 
         private void EnsureBuilt()
         {
-            if (mainPanel != null) return;
+            Debug.Log("[MainMenuUI] EnsureBuilt called");
+            if (mainPanel != null) { Debug.Log("[MainMenuUI] UI already built"); return; }
 
             // Ensure EventSystem exists
             if (FindObjectOfType<EventSystem>() == null)
             {
+                Debug.Log("[MainMenuUI] Creating EventSystem");
                 var es = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
                 DontDestroyOnLoad(es);
             }
+            else
+            {
+                Debug.Log("[MainMenuUI] EventSystem already present");
+            }
 
             // Create Canvas
+            Debug.Log("[MainMenuUI] Creating Canvas and panels");
             var canvasGO = new GameObject("MainMenuCanvas");
             var canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -190,11 +204,13 @@ namespace RogueLike2D.UI
                 closeText.fontStyle = FontStyle.Bold;
                 closeText.raycastTarget = false;
 
+                Debug.Log("[MainMenuUI] Created close button");
                 closeButton = btn;
             }
 
             if (closeButton != null)
             {
+                Debug.Log("[MainMenuUI] Wiring close button OnClick -> OnExitButtonClicked");
                 // Ensure the button will use color tinting for hover/pressed visuals (covers inspector-assigned buttons).
                 closeButton.transition = Selectable.Transition.ColorTint;
                 var cbColors = closeButton.colors;
@@ -258,50 +274,57 @@ namespace RogueLike2D.UI
 
         private void OnStartRunClicked()
         {
+            Debug.Log("[MainMenuUI] Start Run clicked");
             // If a roster panel exists, navigate there; otherwise start a default run.
             if (rosterPanel != null)
             {
+                Debug.Log("[MainMenuUI] Roster panel exists; navigating to roster");
                 ShowRoster();
                 return;
             }
 
             if (GameManager.Instance != null)
             {
+                Debug.Log("[MainMenuUI] Starting default run with a single Warrior");
                 var squad = new List<CharacterDefinitionSO> { ContentFactory.CreateWarriorDefinition() };
                 GameManager.Instance.StartNewRun(squad);
             }
             else
             {
-                Debug.LogWarning("GameManager.Instance not found.");
+                Debug.LogWarning("[MainMenuUI] GameManager.Instance not found.");
             }
         }
 
         private void OnViewCollectionClicked()
         {
+            Debug.Log("[MainMenuUI] View Collection clicked");
             if (collectionPanel != null)
             {
+                Debug.Log("[MainMenuUI] Collection panel exists; navigating to collection");
                 ShowCollection();
                 return;
             }
 
-            Debug.Log("Collection view is not set up yet.");
+            Debug.Log("[MainMenuUI] Collection view is not set up yet.");
         }
 
         private void OnExitButtonClicked()
         {
+            Debug.Log("[MainMenuUI] Exit button clicked");
             if (closeButton != null)
             {
                 StartCoroutine(ExitButtonFeedbackAndQuit(closeButton, 0.2f));
             }
             else
             {
-                Debug.Log("Close button clicked - quitting");
+                Debug.Log("[MainMenuUI] Close button missing - quitting directly");
                 QuitGame();
             }
         }
 
         private System.Collections.IEnumerator ExitButtonFeedbackAndQuit(Button btn, float postDelay)
         {
+            Debug.Log("[MainMenuUI] ExitButtonFeedbackAndQuit starting");
             var rt = btn.GetComponent<RectTransform>();
             var img = btn.GetComponent<Image>();
             Vector3 origScale = rt != null ? rt.localScale : Vector3.one;
@@ -319,25 +342,28 @@ namespace RogueLike2D.UI
             if (rt != null) rt.localScale = origScale;
             if (img != null) img.color = origColor;
 
+            Debug.Log("[MainMenuUI] Exit animation complete, waiting briefly before quit");
             yield return new WaitForSecondsRealtime(postDelay);
 
-            Debug.Log("Close button clicked - quitting");
+            Debug.Log("[MainMenuUI] Quitting application now");
             QuitGame();
         }
 
         // Public method so it can be wired in the Inspector or called from UI.
         public void QuitGame()
         {
-            Debug.Log("Quit requested from Main Menu.");
+            Debug.Log($"[MainMenuUI] QuitGame requested. product={Application.productName} version={Application.version} platform={Application.platform}");
 
 #if UNITY_EDITOR
             // Stop Play mode when running inside the Editor.
             UnityEditor.EditorApplication.isPlaying = false;
+            Debug.Log("[MainMenuUI] Unity Editor: exiting Play mode");
 #else
             // Request application quit for builds. Some platforms or build configurations
             // may not immediately terminate the process via Application.Quit(),
             // so follow up with Environment.Exit as a fallback to ensure the app exits.
             Application.Quit();
+            Debug.Log("[MainMenuUI] Application.Quit() called; calling Environment.Exit(0) as fallback");
             System.Environment.Exit(0);
 #endif
         }

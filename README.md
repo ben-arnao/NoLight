@@ -43,3 +43,16 @@ Notes for contributors
 - Namespaces: RogueLike2D.Core, RogueLike2D.UI, RogueLike2D.Battle, etc.
 - GameManager is a DontDestroyOnLoad singleton. It now tries to show the main menu on Start if a MainMenuUI exists in the scene.
 - MainMenuUI shows the main panel automatically on Start to avoid blank screens.
+
+Debug logs
+- Location:
+  - Unity Editor: <project_root>/Logs/debug.log
+  - Player builds: <persistentDataPath>/Logs/debug.log
+    - On Windows this is typically C:\Users\<YourUser>\AppData\LocalLow\<CompanyName>\<ProductName>\Logs\debug.log
+- Behavior:
+  - Logs are cleared on each app start (fresh log per session).
+  - All Unity Console messages are mirrored to this file with timestamps and frame counts; errors include stack traces.
+  - Startup, menu initialization, and UI interactions (Start Run, View Collection, Exit) are explicitly logged.
+- Troubleshooting:
+  - If the main menu appears unresponsive, click "Exit" and check the log for lines starting with [MainMenuUI] and [GameManager].
+  - Confirm that "Application.Quit()" or "EditorApplication.isPlaying = false" was invoked when pressing Exit.
