@@ -9,6 +9,12 @@ namespace RogueLike2D.Editor
     // Call via: -executeMethod RogueLike2D.Editor.BuildScript.PerformWindowsBuild
     public static class BuildScript
     {
+        // Compatibility alias for older CLI usage: -executeMethod BuildScript.PerformBuild
+        public static void PerformBuild()
+        {
+            PerformWindowsBuild();
+        }
+
         public static void PerformWindowsBuild()
         {
             var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
