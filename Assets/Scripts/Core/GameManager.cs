@@ -203,7 +203,7 @@ namespace RogueLike2D.Core
             if (won)
                 PlayerPrefs.SetInt("wonRuns", wonRuns + 1);
             PlayerPrefs.Save();
-            Debug.Log($"[GameManager] SaveWin called. Won={won}. WonRuns now={PlayerPrefs.GetInt(\"wonRuns\", 0)}");
+            Debug.Log($"[GameManager] SaveWin called. Won={won}. WonRuns now={PlayerPrefs.GetInt("wonRuns", 0)}");
         }
 
         public float GetGlobalRunWinRate()
