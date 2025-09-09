@@ -162,12 +162,16 @@ namespace RogueLike2D.UI
                 closeImg.raycastTarget = true;
 
                 var btn = closeGO.AddComponent<Button>();
+                // Ensure the button uses Color Tint transition so hover/pressed colors work.
+                btn.transition = Selectable.Transition.ColorTint;
                 btn.targetGraphic = closeImg;
                 btn.interactable = true;
                 var btnColors = btn.colors;
                 btnColors.normalColor = new Color(0, 0, 0, 0);
-                btnColors.highlightedColor = new Color(1f, 1f, 1f, 0.1f);
-                btnColors.pressedColor = new Color(1f, 1f, 1f, 0.2f);
+                // Make hover/highlighted state a semi-transparent grey so the Exit looks grey on hover.
+                btnColors.highlightedColor = new Color(0.6f, 0.6f, 0.6f, 0.4f);
+                btnColors.pressedColor = new Color(0.4f, 0.4f, 0.4f, 0.5f);
+                btnColors.selectedColor = btnColors.normalColor;
                 btn.colors = btnColors;
 
                 var closeTextGO = new GameObject("X");
@@ -191,6 +195,15 @@ namespace RogueLike2D.UI
 
             if (closeButton != null)
             {
+                // Ensure the button will use color tinting for hover/pressed visuals (covers inspector-assigned buttons).
+                closeButton.transition = Selectable.Transition.ColorTint;
+                var cbColors = closeButton.colors;
+                cbColors.normalColor = new Color(0, 0, 0, 0);
+                cbColors.highlightedColor = new Color(0.6f, 0.6f, 0.6f, 0.4f);
+                cbColors.pressedColor = new Color(0.4f, 0.4f, 0.4f, 0.5f);
+                cbColors.selectedColor = cbColors.normalColor;
+                closeButton.colors = cbColors;
+
                 closeButton.onClick.RemoveAllListeners();
                 // Add a small debug log and call QuitGame to ensure the click handler is robust.
                 closeButton.onClick.AddListener(() => { Debug.Log("Close button clicked - quitting"); QuitGame(); });
