@@ -21,6 +21,21 @@ namespace RogueLike2D.UI
         private Button viewCollectionButton;
         private Text buildNumberText;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void EnsureMenuOnLoad()
+        {
+            var existing = UnityEngine.Object.FindObjectOfType<MainMenuUI>();
+            if (existing == null)
+            {
+                var go = new GameObject("MainMenuUI");
+                existing = go.AddComponent<MainMenuUI>();
+            }
+            if (existing != null)
+            {
+                existing.ShowMain();
+            }
+        }
+
         public void ShowMain()
         {
             EnsureBuilt();
@@ -67,6 +82,8 @@ namespace RogueLike2D.UI
             var canvasGO = new GameObject("MainMenuCanvas");
             var canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 1000;
             var scaler = canvasGO.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
@@ -95,7 +112,7 @@ namespace RogueLike2D.UI
             titleRect.anchorMax = new Vector2(0.5f, 0.75f);
             titleRect.anchoredPosition = Vector2.zero;
             titleRect.sizeDelta = new Vector2(800, 160);
-            titleText.text = "No Light";
+            titleText.text = "no light";
             titleText.alignment = TextAnchor.MiddleCenter;
             titleText.color = Color.white;
             titleText.font = font;
