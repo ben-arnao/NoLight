@@ -205,8 +205,8 @@ namespace RogueLike2D.UI
                 closeButton.colors = cbColors;
 
                 closeButton.onClick.RemoveAllListeners();
-                // Add a small debug log and call QuitGame to ensure the click handler is robust.
-                closeButton.onClick.AddListener(() => { Debug.Log("Close button clicked - quitting"); QuitGame(); });
+                // Use a handler that shows visual feedback before quitting so the user sees the click.
+                closeButton.onClick.AddListener(OnExitButtonClicked);
                 closeButton.interactable = true;
                 var imgComp = closeButton.GetComponent<Image>();
                 if (imgComp != null) imgComp.raycastTarget = true;
@@ -285,6 +285,44 @@ namespace RogueLike2D.UI
             }
 
             Debug.Log("Collection view is not set up yet.");
+        }
+
+        private void OnExitButtonClicked()
+        {
+            if (closeButton != null)
+            {
+                StartCoroutine(ExitButtonFeedbackAndQuit(closeButton, 0.2f));
+            }
+            else
+            {
+                Debug.Log("Close button clicked - quitting");
+                QuitGame();
+            }
+        }
+
+        private System.Collections.IEnumerator ExitButtonFeedbackAndQuit(Button btn, float postDelay)
+        {
+            var rt = btn.GetComponent<RectTransform>();
+            var img = btn.GetComponent<Image>();
+            Vector3 origScale = rt != null ? rt.localScale : Vector3.one;
+            Color origColor = img != null ? img.color : Color.white;
+            float duration = 0.12f;
+            float t = 0f;
+            while (t < duration)
+            {
+                t += Time.unscaledDeltaTime;
+                float f = Mathf.Sin((t / duration) * Mathf.PI);
+                if (rt != null) rt.localScale = origScale * (1f + 0.08f * f);
+                if (img != null) img.color = Color.Lerp(origColor, Color.white, f * 0.5f);
+                yield return null;
+            }
+            if (rt != null) rt.localScale = origScale;
+            if (img != null) img.color = origColor;
+
+            yield return new WaitForSecondsRealtime(postDelay);
+
+            Debug.Log("Close button clicked - quitting");
+            QuitGame();
         }
 
         // Public method so it can be wired in the Inspector or called from UI.
