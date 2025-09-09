@@ -28,7 +28,7 @@ namespace RogueLike2D.Core
 
             try
             {
-                // In Editor, write logs to <project_root>/Logs for convenience.
+                // In Editor, prefer writing logs to <project_root>/Logs for convenience.
                 // In builds, write logs under persistentDataPath/Logs.
                 string baseDir = Application.isEditor
                     ? Path.GetFullPath(Path.Combine(Application.dataPath, ".."))
@@ -36,21 +36,40 @@ namespace RogueLike2D.Core
 
                 _logDir = Path.Combine(baseDir, "Logs");
 
-                // Fresh logs each session: clear existing .log files.
-                if (Directory.Exists(_logDir))
+                // Ensure the log directory exists (create if necessary). Be defensive: try to create and fall back.
+                try
+                {
+                    Directory.CreateDirectory(_logDir);
+                }
+                catch (Exception dirEx)
+                {
+                    Debug.LogWarning($"[FileLogger] Could not create log directory at {_logDir}: {dirEx}. Falling back to persistentDataPath.");
+                    baseDir = Application.persistentDataPath;
+                    _logDir = Path.Combine(baseDir, "Logs");
+                    try { Directory.CreateDirectory(_logDir); } catch { /* ignore */ }
+                }
+
+                // Fresh logs each session: clear existing .log files if possible.
+                try
                 {
                     foreach (var f in Directory.GetFiles(_logDir, "*.log"))
                     {
                         try { File.Delete(f); } catch { /* ignore */ }
                     }
                 }
-                else
-                {
-                    Directory.CreateDirectory(_logDir);
-                }
+                catch { /* ignore */ }
 
                 _logFilePath = Path.Combine(_logDir, "debug.log");
-                _writer = new StreamWriter(_logFilePath, true, Encoding.UTF8) { AutoFlush = true };
+
+                try
+                {
+                    _writer = new StreamWriter(_logFilePath, true, Encoding.UTF8) { AutoFlush = true };
+                }
+                catch (Exception writerEx)
+                {
+                    Debug.LogError($"[FileLogger] Failed to open log file {_logFilePath}: {writerEx}");
+                    _writer = null;
+                }
 
                 Application.logMessageReceivedThreaded -= OnLogMessageReceived;
                 Application.logMessageReceivedThreaded += OnLogMessageReceived;
@@ -58,6 +77,21 @@ namespace RogueLike2D.Core
                 Application.quitting += OnQuitting;
 
                 WriteSessionHeader();
+
+                // Best-effort: write a startup marker directly to the file to make it obvious that the app attempted to start.
+                try
+                {
+                    lock (_lock)
+                    {
+                        if (_writer != null)
+                        {
+                            _writer.WriteLine($"[FileLogger] Startup logged at {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
+                            _writer.Flush();
+                        }
+                    }
+                }
+                catch { /* ignore */ }
+
                 Debug.Log($"[FileLogger] Initialized. Writing to {_logFilePath}");
             }
             catch (Exception ex)
