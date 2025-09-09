@@ -1,5 +1,5 @@
 # RogueLike2D Prototype - Local Development
-Author: Dave
+Author: lily
 
 This Unity project is a small turn-based roguelike prototype. Follow these steps to open and run it locally and see the Main Menu on Play.
 
