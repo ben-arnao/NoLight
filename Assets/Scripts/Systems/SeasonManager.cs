@@ -28,7 +28,7 @@ namespace RogueLike2D.Systems
             }
 
             // Generate deterministic seed from seasonId
-            int seed = seasonId * 73856093 ^ 0x9e3779b9;
+            int seed = seasonId * 73856093 ^ unchecked((int)0x9E3779B9);
             PlayerPrefs.SetInt(key, seed);
             ArchiveSeason(seasonId, seed);
             PlayerPrefs.Save();
