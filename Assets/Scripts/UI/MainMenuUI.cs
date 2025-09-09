@@ -15,6 +15,7 @@ namespace RogueLike2D.UI
         [SerializeField] private GameObject mainPanel;
         [SerializeField] private GameObject rosterPanel;
         [SerializeField] private GameObject collectionPanel;
+        [SerializeField] private Button closeButton;
 
         private Text titleText;
         private Button startRunButton;
@@ -142,6 +143,53 @@ namespace RogueLike2D.UI
             buildNumberText.color = Color.white;
             buildNumberText.font = font;
             buildNumberText.fontSize = 18;
+
+            // Close (X) button - top-right. If a Button has been assigned in the Inspector, respect it;
+            // otherwise create a small X button and wire it to QuitGame.
+            if (closeButton == null)
+            {
+                var closeGO = new GameObject("CloseButton");
+                closeGO.transform.SetParent(mainPanel.transform, false);
+                var closeRect = closeGO.AddComponent<RectTransform>();
+                closeRect.anchorMin = new Vector2(1f, 1f);
+                closeRect.anchorMax = new Vector2(1f, 1f);
+                closeRect.pivot = new Vector2(1f, 1f);
+                closeRect.anchoredPosition = new Vector2(-16, -16);
+                closeRect.sizeDelta = new Vector2(48, 48);
+
+                var closeImg = closeGO.AddComponent<Image>();
+                closeImg.color = new Color(0, 0, 0, 0);
+
+                var btn = closeGO.AddComponent<Button>();
+                var btnColors = btn.colors;
+                btnColors.normalColor = new Color(0, 0, 0, 0);
+                btnColors.highlightedColor = new Color(1f, 1f, 1f, 0.1f);
+                btnColors.pressedColor = new Color(1f, 1f, 1f, 0.2f);
+                btn.colors = btnColors;
+
+                var closeTextGO = new GameObject("X");
+                closeTextGO.transform.SetParent(closeGO.transform, false);
+                var closeText = closeTextGO.AddComponent<Text>();
+                var closeTextRect = closeTextGO.GetComponent<RectTransform>();
+                closeTextRect.anchorMin = new Vector2(0, 0);
+                closeTextRect.anchorMax = new Vector2(1, 1);
+                closeTextRect.offsetMin = Vector2.zero;
+                closeTextRect.offsetMax = Vector2.zero;
+                closeText.text = "X";
+                closeText.alignment = TextAnchor.MiddleCenter;
+                closeText.color = Color.white;
+                closeText.font = font;
+                closeText.fontSize = 24;
+                closeText.fontStyle = FontStyle.Bold;
+
+                closeButton = btn;
+            }
+
+            if (closeButton != null)
+            {
+                closeButton.onClick.RemoveAllListeners();
+                closeButton.onClick.AddListener(QuitGame);
+            }
         }
 
         private Button CreateLinkButton(Transform parent, string name, string label, Vector2 anchoredPos)
@@ -216,6 +264,17 @@ namespace RogueLike2D.UI
             }
 
             Debug.Log("Collection view is not set up yet.");
+        }
+
+        // Public method so it can be wired in the Inspector or called from UI.
+        public void QuitGame()
+        {
+            Debug.Log("Quit requested from Main Menu.");
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
     }
 }
