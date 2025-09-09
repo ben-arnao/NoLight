@@ -36,6 +36,17 @@ namespace RogueLike2D.Core
 
         public RunState State { get; private set; } = RunState.None;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void AutoBootstrap()
+        {
+            if (Instance != null) return;
+            var existing = UnityEngine.Object.FindObjectOfType<GameManager>();
+            if (existing != null) return;
+
+            var go = new GameObject("GameManager (Auto)");
+            go.AddComponent<GameManager>();
+        }
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
