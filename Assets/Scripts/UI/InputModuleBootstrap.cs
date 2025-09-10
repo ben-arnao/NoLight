@@ -17,7 +17,13 @@ namespace RogueLike2D.UI
     [Preserve]
     public static class InputModuleBootstrap
     {
-        // === EARLIEST HOOK ===
+        // === EARLIEST HOOKS ===
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void BootstrapSubsystemRegistration()
+        {
+            Debug.Log("[InputModuleBootstrap] SubsystemRegistration");
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void HookSceneLoaded()
         {

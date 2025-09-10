@@ -67,6 +67,21 @@ namespace RogueLike2D.Core
             if (!stageGenerator) { stageGenerator = GetComponentInChildren<StageGenerator>(); Debug.Log($"[GameManager] Auto-wired StageGenerator: {(stageGenerator ? "found" : "missing")}"); }
             if (!unlockManager) { unlockManager = GetComponentInChildren<UnlockManager>(); Debug.Log($"[GameManager] Auto-wired UnlockManager: {(unlockManager ? "found" : "missing")}"); }
             if (!battleManager) { battleManager = GetComponentInChildren<BattleManager>(); Debug.Log($"[GameManager] Auto-wired BattleManager: {(battleManager ? "found" : "missing")}"); }
+
+            // Belt & suspenders: ensure the EventSystem exists and is configured immediately
+            UnityEngine.EventSystems.EventSystem es = null;
+#if UNITY_2023_1_OR_NEWER
+            es = UnityEngine.Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
+#else
+            es = UnityEngine.Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
+#endif
+            if (!es)
+            {
+                var go = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem));
+                es = go.GetComponent<UnityEngine.EventSystems.EventSystem>();
+                Debug.Log("[GameManager] Created EventSystem in Awake");
+            }
+            InputModuleBootstrap.EnsureCorrectInputModule(es, "GameManager.Awake");
         }
 
         private void Start()
