@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem.UI;
+#endif
 using UnityEngine.Events;
 using RogueLike2D.Core;
 using RogueLike2D.Content;
@@ -81,19 +84,38 @@ namespace RogueLike2D.UI
             Debug.Log("[MainMenuUI] EnsureBuilt called");
             if (mainPanel != null) { Debug.Log("[MainMenuUI] UI already built"); return; }
 
-            // Ensure EventSystem exists
-            if (FindObjectOfType<EventSystem>() == null)
+            // Ensure EventSystem exists and attach the correct input module for the active input handling
+            var es = FindObjectOfType<EventSystem>();
+            if (es == null)
             {
                 Debug.Log("[MainMenuUI] Creating EventSystem");
-                var es = new GameObject("EventSystem", typeof(EventSystem));
-                DontDestroyOnLoad(es);
-                InputModuleBootstrap.EnsureCorrectInputModule(es.GetComponent<EventSystem>(), "MainMenuUI.EnsureBuilt (created)");
+                var esGO = new GameObject("EventSystem", typeof(EventSystem));
+                DontDestroyOnLoad(esGO);
+                es = esGO.GetComponent<EventSystem>();
             }
             else
             {
                 Debug.Log("[MainMenuUI] EventSystem already present");
-                InputModuleBootstrap.EnsureCorrectInputModule(EventSystem.current, "MainMenuUI.EnsureBuilt (existing)");
             }
+
+            // Remove any existing input modules to avoid mismatches/conflicts, then add the appropriate one
+            foreach (var m in es.GetComponents<BaseInputModule>())
+            {
+                Destroy(m);
+            }
+#if ENABLE_INPUT_SYSTEM
+            if (es.GetComponent<InputSystemUIInputModule>() == null)
+            {
+                es.gameObject.AddComponent<InputSystemUIInputModule>();
+                Debug.Log("[MainMenuUI] Added InputSystemUIInputModule");
+            }
+#else
+            if (es.GetComponent<StandaloneInputModule>() == null)
+            {
+                es.gameObject.AddComponent<StandaloneInputModule>();
+                Debug.Log("[MainMenuUI] Added StandaloneInputModule (legacy)");
+            }
+#endif
 
             // Create Canvas
             Debug.Log("[MainMenuUI] Creating Canvas and panels");
@@ -314,8 +336,25 @@ namespace RogueLike2D.UI
         private void OnExitButtonClicked()
         {
             Debug.Log("[MainMenuUI] Exit button clicked");
-            // Ensure correct input module just before quitting (diagnostic safety)
-            InputModuleBootstrap.EnsureCorrectInputModule(EventSystem.current, "MainMenuUI.OnExitButtonClicked");
+            // Ensure correct input module just before quitting (diagnostic safety) — avoid re-attaching legacy module under new input system
+            var es = EventSystem.current;
+            if (es != null)
+            {
+                // If the wrong type of input module is present, remove it and ensure the correct one is attached
+                foreach (var m in es.GetComponents<BaseInputModule>())
+                {
+#if ENABLE_INPUT_SYSTEM
+                    if (!(m is InputSystemUIInputModule)) Destroy(m);
+#else
+                    if (!(m is StandaloneInputModule)) Destroy(m);
+#endif
+                }
+#if ENABLE_INPUT_SYSTEM
+                if (es.GetComponent<InputSystemUIInputModule>() == null) es.gameObject.AddComponent<InputSystemUIInputModule>();
+#else
+                if (es.GetComponent<StandaloneInputModule>() == null) es.gameObject.AddComponent<StandaloneInputModule>();
+#endif
+            }
             if (closeButton != null)
             {
                 StartCoroutine(ExitButtonFeedbackAndQuit(closeButton, 0.2f));
