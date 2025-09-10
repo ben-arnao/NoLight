@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -25,6 +26,18 @@ namespace RogueLike2D.UI
                 Debug.Log("[InputModuleBootstrap] Found existing EventSystem at init");
             }
 
+            try
+            {
+                var legacy = es != null ? es.GetComponent<StandaloneInputModule>() : null;
+                var isType = Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+                Component isModule = (isType != null && es != null) ? es.GetComponent(isType) : null;
+                Debug.Log($"[InputModuleBootstrap] Pre-check modules at init: LegacyPresent={(legacy!=null)}, ISPresent={(isModule!=null)}, InputSystemTypeFound={(isType!=null)}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[InputModuleBootstrap] Pre-check failed: {ex}");
+            }
+
             EnsureCorrectInputModule(es, "RuntimeInit.AfterSceneLoad");
         }
 
@@ -36,46 +49,73 @@ namespace RogueLike2D.UI
                 return;
             }
 
-            bool hadLegacy = es.GetComponent<StandaloneInputModule>() != null;
-            bool hadIS = false;
-#if ENABLE_INPUT_SYSTEM
-            var existingIS = es.GetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
-            hadIS = existingIS != null;
+            var legacy = es.GetComponent<StandaloneInputModule>();
+            Type isType = Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+            Component existingIS = null;
+            bool inputSystemAvailable = false;
+            if (isType != null)
+            {
+                inputSystemAvailable = true;
+                try
+                {
+                    existingIS = es.GetComponent(isType);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[InputModuleBootstrap] Failed to probe InputSystemUIInputModule: {ex}");
+                }
+            }
+
+            bool hadLegacy = legacy != null;
+            bool hadIS = existingIS != null;
+
+            bool newOnly = false;
+#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
+            newOnly = true;
 #endif
 
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-            // Input System (New) only
-            Debug.Log($"[InputModuleBootstrap] EnsureCorrectInputModule ({context}) - Active Input: New only. LegacyPresent={hadLegacy}, ISPresent={hadIS}");
-#if ENABLE_INPUT_SYSTEM
-            if (!hadIS)
+            Debug.Log($"[InputModuleBootstrap] EnsureCorrectInputModule ({context}) - Detected: NewOnly={newOnly}, InputSystemAvailable={inputSystemAvailable}, LegacyPresent={hadLegacy}, ISPresent={hadIS}");
+
+            if (newOnly)
             {
-                es.gameObject.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
-                Debug.Log("[InputModuleBootstrap] Added InputSystemUIInputModule");
+                if (!inputSystemAvailable)
+                {
+                    Debug.LogError("[InputModuleBootstrap] Active Input is New-only but Input System package type was not found. UI input may fail.");
+                }
+                else if (!hadIS)
+                {
+                    try
+                    {
+                        es.gameObject.AddComponent(isType);
+                        Debug.Log("[InputModuleBootstrap] Added InputSystemUIInputModule");
+                    }
+                    catch (Exception addEx)
+                    {
+                        Debug.LogError($"[InputModuleBootstrap] Failed to add InputSystemUIInputModule: {addEx}");
+                    }
+                }
+
+                if (legacy != null)
+                {
+                    UnityEngine.Object.Destroy(legacy);
+                    Debug.Log("[InputModuleBootstrap] Removed StandaloneInputModule (legacy)");
+                }
             }
-#endif
-            var legacy = es.GetComponent<StandaloneInputModule>();
-            if (legacy != null)
+            else
             {
-                Object.Destroy(legacy);
-                Debug.Log("[InputModuleBootstrap] Removed StandaloneInputModule (legacy)");
+                // Legacy or Both: prefer StandaloneInputModule to keep compatibility with existing UI
+                if (inputSystemAvailable && existingIS != null)
+                {
+                    UnityEngine.Object.Destroy(existingIS);
+                    Debug.Log("[InputModuleBootstrap] Removed InputSystemUIInputModule");
+                }
+
+                if (legacy == null)
+                {
+                    es.gameObject.AddComponent<StandaloneInputModule>();
+                    Debug.Log("[InputModuleBootstrap] Added StandaloneInputModule (legacy)");
+                }
             }
-#else
-            // Legacy or Both
-            Debug.Log($"[InputModuleBootstrap] EnsureCorrectInputModule ({context}) - Active Input: Legacy or Both. LegacyPresent={hadLegacy}, ISPresent={hadIS}");
-#if ENABLE_INPUT_SYSTEM
-            if (hadIS)
-            {
-                Object.Destroy(existingIS);
-                Debug.Log("[InputModuleBootstrap] Removed InputSystemUIInputModule");
-            }
-#endif
-            var legacy = es.GetComponent<StandaloneInputModule>();
-            if (legacy == null)
-            {
-                es.gameObject.AddComponent<StandaloneInputModule>();
-                Debug.Log("[InputModuleBootstrap] Added StandaloneInputModule (legacy)");
-            }
-#endif
         }
     }
 }
