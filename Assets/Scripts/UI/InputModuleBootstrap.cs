@@ -45,6 +45,32 @@ namespace RogueLike2D.UI
             EnsureCorrectInputModule(es, "RuntimeInit.AfterSceneLoad");
         }
 
+        // Extra safety: ensure this runs even in CLI builds and different script reload orders.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void AutoFixEventSystem()
+        {
+            try
+            {
+#if UNITY_2023_1_OR_NEWER
+                var es = UnityEngine.Object.FindFirstObjectByType<EventSystem>();
+#else
+                var es = UnityEngine.Object.FindObjectOfType<EventSystem>();
+#endif
+                if (!es)
+                {
+                    var go = new GameObject("EventSystem", typeof(EventSystem));
+                    es = go.GetComponent<EventSystem>();
+                    Debug.Log("[InputModuleBootstrap] AutoFixEventSystem created EventSystem");
+                }
+
+                EnsureCorrectInputModule(es, "AutoFixEventSystem");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[InputModuleBootstrap] AutoFixEventSystem failed: {ex}");
+            }
+        }
+
         // Public entry point to ensure an EventSystem exists and is configured
         // with the correct input module based on the active input handling.
         public static EventSystem EnsureEventSystem()
