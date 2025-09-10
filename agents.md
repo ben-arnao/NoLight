@@ -6,6 +6,7 @@ Commit policy:
 
 Build expectations (Unity project):
 - There must be zero compiler errors in the Unity Console.
+- Run Tools\build_windows.bat and confirm it completes successfully; inspect build_log.txt for errors.
 - Perform a test Player build or trigger a full script recompilation and confirm no errors.
 - If new dependencies are added, update the project configuration and verify the build still succeeds.
 
