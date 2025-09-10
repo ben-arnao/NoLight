@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+using UnityEngine.Scripting;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem.UI;
 // using UnityEngine.InputSystem; // Uncomment if assigning actions asset in code
@@ -12,8 +14,48 @@ namespace RogueLike2D.UI
     // Active Input Handling is set to "Input System Package (New)".
     // - If only the new Input System is enabled, uses InputSystemUIInputModule.
     // - Otherwise (Legacy or Both), uses StandaloneInputModule.
+    [Preserve]
     public static class InputModuleBootstrap
     {
+        // === EARLIEST HOOK ===
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void HookSceneLoaded()
+        {
+            try
+            {
+                SceneManager.sceneLoaded += OnSceneLoaded;
+                Debug.Log("[InputModuleBootstrap] Hooked sceneLoaded (BeforeSceneLoad).");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[InputModuleBootstrap] Failed to hook sceneLoaded: {ex}");
+            }
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            try
+            {
+#if UNITY_2023_1_OR_NEWER
+                var es = UnityEngine.Object.FindFirstObjectByType<EventSystem>();
+#else
+                var es = UnityEngine.Object.FindObjectOfType<EventSystem>();
+#endif
+                if (!es)
+                {
+                    var go = new GameObject("EventSystem", typeof(EventSystem));
+                    es = go.GetComponent<EventSystem>();
+                    Debug.Log("[InputModuleBootstrap] Created EventSystem in OnSceneLoaded.");
+                }
+
+                EnsureCorrectInputModule(es, $"OnSceneLoaded:{scene.name}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[InputModuleBootstrap] OnSceneLoaded failed: {ex}");
+            }
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureEventSystemAndCorrectInputModule()
         {
