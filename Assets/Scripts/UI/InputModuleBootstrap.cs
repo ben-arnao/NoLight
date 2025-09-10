@@ -184,8 +184,10 @@ namespace RogueLike2D.UI
             {
                 if (uim.actionsAsset == null)
                 {
-                    // Load the default UI actions provided by the Input System package.
-                    uim.actionsAsset = InputSystemUIInputModule.LoadDefaultActions();
+                    // Create the default UI actions asset (covers basic mouse, keyboard, gamepad input).
+                    // The previous API "LoadDefaultActions" was removed in newer Input System versions,
+                    // so we now generate the asset at runtime using the provided helper.
+                    uim.actionsAsset = InputSystemUIInputModule.CreateDefaultActions();
                     Debug.Log("[InputModuleBootstrap] Assigned default UI actions asset to InputSystemUIInputModule");
                 }
             }
