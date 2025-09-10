@@ -64,3 +64,14 @@ Debug logs
 Running tests
 - Open Unity Editor and go to Window > General > Test Runner.
 - Select the EditMode tab and run FileLoggerTests. You should see the test pass and a debug.log containing a [BASELINE] line.
+
+Troubleshooting: UI input freezes or Exit button does nothing
+- Symptom: Console spam like
+  - InvalidOperationException: You are trying to read Input using the UnityEngine.Input class, but you have switched active Input handling to Input System package in Player Settings.
+- Cause: The scene uses the legacy StandaloneInputModule while Project Settings > Player > Active Input Handling is set to "Input System Package (New)".
+- Fix applied by this repo:
+  - Assets/Editor/EnsureInputSettings.cs automatically sets Active Input Handling to "Both" when the Editor opens. This makes the legacy StandaloneInputModule work and unfreezes the UI.
+  - You can also run it manually via menu: Tools > Roguelike2D > Fix Input Handling (Set to Both).
+- If you still see issues:
+  - Ensure your scene has an EventSystem GameObject with a StandaloneInputModule component (or migrate to InputSystemUIInputModule and provide a UI actions asset).
+  - Close and reopen the project to ensure the setting was applied.
