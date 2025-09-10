@@ -151,9 +151,18 @@ namespace RogueLike2D.UI
                 {
                     foreach (var m in existing)
                     {
-                        UnityEngine.Object.Destroy(m);
+                        try
+                        {
+                            m.enabled = false;
+                        }
+                        catch { /* ignore */ }
+#if UNITY_EDITOR
+                        UnityEngine.Object.DestroyImmediate(m, true);
+#else
+                        UnityEngine.Object.DestroyImmediate(m);
+#endif
                     }
-                    Debug.Log($"[InputModuleBootstrap] Removed {existing.Length} existing BaseInputModule component(s)");
+                    Debug.Log($"[InputModuleBootstrap] Removed {existing.Length} existing BaseInputModule component(s) immediately");
                 }
             }
             catch (Exception ex)
