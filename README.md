@@ -71,6 +71,7 @@ Troubleshooting: UI input freezes or Exit button does nothing
 - Cause: The scene uses the legacy StandaloneInputModule while Project Settings > Player > Active Input Handling is set to "Input System Package (New)".
 - Fix applied by this repo:
   - Assets/Editor/EnsureInputSettings.cs automatically sets Active Input Handling to "Both" when the Editor opens. This makes the legacy StandaloneInputModule work and unfreezes the UI.
+  - At runtime, Assets/Scripts/UI/InputModuleBootstrap.cs ensures the correct EventSystem input module based on active input handling (adds InputSystemUIInputModule when only the new Input System is enabled; otherwise ensures StandaloneInputModule).
   - You can also run it manually via menu: Tools > Roguelike2D > Fix Input Handling (Set to Both).
 - If you still see issues:
   - Ensure your scene has an EventSystem GameObject with a StandaloneInputModule component (or migrate to InputSystemUIInputModule and provide a UI actions asset).
