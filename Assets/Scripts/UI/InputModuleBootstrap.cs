@@ -69,33 +69,63 @@ namespace RogueLike2D.UI
                 return;
             }
 
-#if ENABLE_INPUT_SYSTEM
-            // Prefer the new Input System UI module whenever the define is present (New or Both).
-            var legacy = es.GetComponent<StandaloneInputModule>();
-            if (legacy)
+            // Remove any existing UI input modules to avoid mixed modules causing issues.
+            try
             {
-                UnityEngine.Object.Destroy(legacy);
-                Debug.Log("[InputModuleBootstrap] Removed StandaloneInputModule (legacy)");
+                var existing = es.GetComponents<BaseInputModule>();
+                if (existing != null && existing.Length > 0)
+                {
+                    foreach (var m in existing)
+                    {
+                        UnityEngine.Object.Destroy(m);
+                    }
+                    Debug.Log($"[InputModuleBootstrap] Removed {existing.Length} existing BaseInputModule component(s)");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[InputModuleBootstrap] Failed to enumerate/remove existing input modules: {ex}");
             }
 
+#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
+            // Project is configured for Input System (New) only: add the new input system module.
             var uim = es.GetComponent<InputSystemUIInputModule>();
             if (!uim)
             {
                 uim = es.gameObject.AddComponent<InputSystemUIInputModule>();
-                Debug.Log("[InputModuleBootstrap] Added InputSystemUIInputModule");
+                Debug.Log("[InputModuleBootstrap] Added InputSystemUIInputModule (New only)");
             }
-
-            // OPTIONAL: assign a UI actions asset if needed for keyboard/controller navigation.
-            // uim.actionsAsset = uim.actionsAsset ?? Resources.Load<InputActionAsset>(\"UIActions\");
+            // Warn if no actions asset is assigned; UI navigation may not work without it.
+            try
+            {
+                if (uim.actionsAsset == null)
+                {
+                    Debug.LogWarning("[InputModuleBootstrap] InputSystemUIInputModule has no actionsAsset assigned. Assign a UI actions asset in the EventSystem or via code.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[InputModuleBootstrap] Could not check actionsAsset: {ex}");
+            }
 #else
-            // Legacy path: ensure StandaloneInputModule is present.
+            // Legacy or Both: ensure StandaloneInputModule is present for maximum compatibility.
             var legacy = es.GetComponent<StandaloneInputModule>();
             if (!legacy)
             {
                 es.gameObject.AddComponent<StandaloneInputModule>();
-                Debug.Log("[InputModuleBootstrap] Added StandaloneInputModule (legacy)");
+                Debug.Log("[InputModuleBootstrap] Added StandaloneInputModule (Legacy or Both)");
             }
 #endif
+            // Log the resulting modules for diagnostics.
+            try
+            {
+                var finalMods = es.GetComponents<BaseInputModule>();
+                Debug.Log($"[InputModuleBootstrap] Final modules ({context ?? "n/a"}): {string.Join(", ", Array.ConvertAll(finalMods, m => m.GetType().Name))}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[InputModuleBootstrap] Failed to log final modules: {ex}");
+            }
         }
     }
 }
