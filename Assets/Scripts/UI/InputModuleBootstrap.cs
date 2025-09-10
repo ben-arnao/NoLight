@@ -178,17 +178,20 @@ namespace RogueLike2D.UI
                 uim = es.gameObject.AddComponent<InputSystemUIInputModule>();
                 Debug.Log("[InputModuleBootstrap] Added InputSystemUIInputModule (New only)");
             }
-            // Warn if no actions asset is assigned; UI navigation may not work without it.
+            // If no actions asset is assigned, wire up the module with the built-in default
+            // so basic UI input (mouse, keyboard, gamepad) will work out of the box.
             try
             {
                 if (uim.actionsAsset == null)
                 {
-                    Debug.LogWarning("[InputModuleBootstrap] InputSystemUIInputModule has no actionsAsset assigned. Assign a UI actions asset in the EventSystem or via code.");
+                    // Load the default UI actions provided by the Input System package.
+                    uim.actionsAsset = InputSystemUIInputModule.LoadDefaultActions();
+                    Debug.Log("[InputModuleBootstrap] Assigned default UI actions asset to InputSystemUIInputModule");
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[InputModuleBootstrap] Could not check actionsAsset: {ex}");
+                Debug.LogWarning($"[InputModuleBootstrap] Could not assign default actions asset: {ex}");
             }
 #else
             // Legacy or Both: ensure StandaloneInputModule is present for maximum compatibility.
