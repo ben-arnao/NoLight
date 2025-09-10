@@ -85,12 +85,14 @@ namespace RogueLike2D.UI
             if (FindObjectOfType<EventSystem>() == null)
             {
                 Debug.Log("[MainMenuUI] Creating EventSystem");
-                var es = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+                var es = new GameObject("EventSystem", typeof(EventSystem));
                 DontDestroyOnLoad(es);
+                InputModuleBootstrap.EnsureCorrectInputModule(es.GetComponent<EventSystem>(), "MainMenuUI.EnsureBuilt (created)");
             }
             else
             {
                 Debug.Log("[MainMenuUI] EventSystem already present");
+                InputModuleBootstrap.EnsureCorrectInputModule(EventSystem.current, "MainMenuUI.EnsureBuilt (existing)");
             }
 
             // Create Canvas
@@ -312,6 +314,8 @@ namespace RogueLike2D.UI
         private void OnExitButtonClicked()
         {
             Debug.Log("[MainMenuUI] Exit button clicked");
+            // Ensure correct input module just before quitting (diagnostic safety)
+            InputModuleBootstrap.EnsureCorrectInputModule(EventSystem.current, "MainMenuUI.OnExitButtonClicked");
             if (closeButton != null)
             {
                 StartCoroutine(ExitButtonFeedbackAndQuit(closeButton, 0.2f));

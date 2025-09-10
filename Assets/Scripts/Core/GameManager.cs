@@ -88,6 +88,7 @@ namespace RogueLike2D.Core
             {
                 Debug.Log("[GameManager] Showing main menu");
                 mainMenu.ShowMain();
+                InputModuleBootstrap.EnsureCorrectInputModule(UnityEngine.EventSystems.EventSystem.current, "GameManager.Start (post ShowMain)");
             }
             else
             {
