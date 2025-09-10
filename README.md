@@ -76,3 +76,10 @@ Troubleshooting: UI input freezes or Exit button does nothing
 - If you still see issues:
   - Ensure your scene has an EventSystem GameObject with a StandaloneInputModule component (or migrate to InputSystemUIInputModule and provide a UI actions asset).
   - Close and reopen the project to ensure the setting was applied.
+
+CI/command line builds (no CLI override for Active Input Handling)
+- There is no CLI switch to override Active Input Handling during a build; it comes from Project Settings and determines compiler defines (ENABLE_INPUT_SYSTEM, ENABLE_LEGACY_INPUT_MANAGER).
+- This repo includes a pre-build guard script (Assets/Editor/InputHandlingGuard.cs) that warns if the setting and your runtime UI path are likely mismatched. To make it fail the build on mismatch, add the scripting define symbol ROGUELIKE2D_FAIL_ON_INPUT_MISMATCH in Project Settings > Player > Other Settings > Scripting Define Symbols for your target.
+- Runtime EventSystem module selection:
+  - If ONLY the new Input System is enabled, use InputSystemUIInputModule. The included InputModuleBootstrap ensures this automatically at runtime.
+  - Otherwise (Both or Old), StandaloneInputModule will be ensured.
