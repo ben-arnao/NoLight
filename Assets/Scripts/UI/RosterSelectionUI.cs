@@ -15,7 +15,8 @@ namespace RogueLike2D.UI
 
         private void Awake()
         {
-            if (!gameManager) gameManager = FindObjectOfType<GameManager>();
+            // Find the first GameManager instance so we can start runs from the UI.
+            if (!gameManager) gameManager = UnityEngine.Object.FindFirstObjectByType<GameManager>();
             if (startRunButton) startRunButton.onClick.AddListener(StartRunWithWarrior);
         }
 

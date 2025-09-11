@@ -41,7 +41,8 @@ namespace RogueLike2D.Core
         {
             Debug.Log("[GameManager] AutoBootstrap invoked after scene load");
             if (Instance != null) { Debug.Log("[GameManager] Instance already exists, skipping AutoBootstrap"); return; }
-            var existing = UnityEngine.Object.FindObjectOfType<GameManager>();
+            // Unity 2023+ uses FindFirstObjectByType to locate scene objects.
+            var existing = UnityEngine.Object.FindFirstObjectByType<GameManager>();
             if (existing != null) { Debug.Log("[GameManager] Found existing GameManager in scene, skipping AutoBootstrap"); return; }
 
             var go = new GameObject("GameManager (Auto)");
@@ -70,11 +71,8 @@ namespace RogueLike2D.Core
 
             // Belt & suspenders: ensure the EventSystem exists and is configured immediately
             UnityEngine.EventSystems.EventSystem es = null;
-#if UNITY_2023_1_OR_NEWER
+            // Use the modern lookup API for EventSystem.
             es = UnityEngine.Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
-#else
-            es = UnityEngine.Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
-#endif
             if (!es)
             {
                 var go = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem));
@@ -92,7 +90,8 @@ namespace RogueLike2D.Core
             FileLogger.EnsureBaselineMarkers("GameManager.Start");
             Debug.Log($"[GameManager] Logging to: {FileLogger.GetLogFilePath()}");
             // Show or create the main menu on play.
-            var mainMenu = FindObjectOfType<MainMenuUI>();
+            // Locate the MainMenuUI so we can show it immediately at startup.
+            var mainMenu = UnityEngine.Object.FindFirstObjectByType<MainMenuUI>();
             if (mainMenu == null)
             {
                 Debug.Log("[GameManager] No MainMenuUI found. Creating one.");

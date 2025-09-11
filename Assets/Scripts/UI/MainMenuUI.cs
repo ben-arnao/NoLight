@@ -29,7 +29,8 @@ namespace RogueLike2D.UI
         private static void EnsureMenuOnLoad()
         {
             Debug.Log("[MainMenuUI] EnsureMenuOnLoad invoked after scene load");
-            var existing = UnityEngine.Object.FindObjectOfType<MainMenuUI>();
+            // Locate the MainMenuUI if one already exists in the scene.
+            var existing = UnityEngine.Object.FindFirstObjectByType<MainMenuUI>();
             if (existing == null)
             {
                 Debug.Log("[MainMenuUI] No MainMenuUI found in scene. Creating one.");
@@ -85,7 +86,8 @@ namespace RogueLike2D.UI
             if (mainPanel != null) { Debug.Log("[MainMenuUI] UI already built"); return; }
 
             // Ensure EventSystem exists and let InputModuleBootstrap configure the correct input module
-            var es = FindObjectOfType<EventSystem>();
+            // Ensure an EventSystem exists before constructing UI elements.
+            var es = UnityEngine.Object.FindFirstObjectByType<EventSystem>();
             if (es == null)
             {
                 Debug.Log("[MainMenuUI] Creating EventSystem");
