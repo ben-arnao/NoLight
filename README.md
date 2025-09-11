@@ -82,5 +82,5 @@ CI/command line builds (no CLI override for Active Input Handling)
 - Windows quick build: run Tools\build_windows.bat. It invokes RogueLike2D.Editor.BuildScript.PerformWindowsBuild and writes build_log.txt to the repo root.
 - This repo includes a pre-build guard script (Assets/Editor/InputHandlingGuard.cs) that warns if the setting and your runtime UI path are likely mismatched. To make it fail the build on mismatch, add the scripting define symbol ROGUELIKE2D_FAIL_ON_INPUT_MISMATCH in Project Settings > Player > Other Settings > Scripting Define Symbols for your target.
 - Runtime EventSystem module selection:
-  - If ONLY the new Input System is enabled, use InputSystemUIInputModule. The included InputModuleBootstrap ensures this automatically at runtime and supplies a default actions asset if none is configured.
+  - If ONLY the new Input System is enabled, use InputSystemUIInputModule. The included InputModuleBootstrap ensures this automatically at runtime and, if no actions asset is assigned, generates one via `InputSystemUIInputModule.CreateDefaultActions()` so the UI can respond immediately.
   - Otherwise (Both or Old), StandaloneInputModule will be ensured.

@@ -18,7 +18,8 @@ namespace RogueLike2D.UI
 
         private void Awake()
         {
-            if (!battleManager) battleManager = FindObjectOfType<BattleManager>();
+            // Grab the first BattleManager in the scene using the modern lookup API.
+            if (!battleManager) battleManager = UnityEngine.Object.FindFirstObjectByType<BattleManager>();
         }
 
         private void OnEnable()

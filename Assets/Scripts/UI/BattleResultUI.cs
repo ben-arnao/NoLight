@@ -15,7 +15,8 @@ namespace RogueLike2D.UI
 
         private void Awake()
         {
-            if (!battleManager) battleManager = FindObjectOfType<BattleManager>();
+            // Acquire the BattleManager responsible for raising battle events.
+            if (!battleManager) battleManager = UnityEngine.Object.FindFirstObjectByType<BattleManager>();
             if (backToMenuButton) backToMenuButton.onClick.AddListener(BackToMenu);
         }
 

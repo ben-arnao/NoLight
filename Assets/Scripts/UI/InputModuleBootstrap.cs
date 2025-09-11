@@ -42,11 +42,8 @@ namespace RogueLike2D.UI
         {
             try
             {
-#if UNITY_2023_1_OR_NEWER
+                // Unity 2023+: Find the first EventSystem in the scene.
                 var es = UnityEngine.Object.FindFirstObjectByType<EventSystem>();
-#else
-                var es = UnityEngine.Object.FindObjectOfType<EventSystem>();
-#endif
                 if (!es)
                 {
                     var go = new GameObject("EventSystem", typeof(EventSystem));
@@ -99,11 +96,8 @@ namespace RogueLike2D.UI
         {
             try
             {
-#if UNITY_2023_1_OR_NEWER
+                // Search again for an EventSystem in case one wasn't found earlier.
                 var es = UnityEngine.Object.FindFirstObjectByType<EventSystem>();
-#else
-                var es = UnityEngine.Object.FindObjectOfType<EventSystem>();
-#endif
                 if (!es)
                 {
                     var go = new GameObject("EventSystem", typeof(EventSystem));
@@ -123,9 +117,11 @@ namespace RogueLike2D.UI
         // with the correct input module based on the active input handling.
         public static EventSystem EnsureEventSystem()
         {
-            var es = UnityEngine.Object.FindObjectOfType<EventSystem>();
+            // Locate the first EventSystem in the scene using the modern API.
+            var es = UnityEngine.Object.FindFirstObjectByType<EventSystem>();
             if (!es)
             {
+                // No EventSystem exists yet; create one so UI can function.
                 var go = new GameObject("EventSystem", typeof(EventSystem));
                 es = go.GetComponent<EventSystem>();
                 Debug.Log("[InputModuleBootstrap] Created EventSystem");
