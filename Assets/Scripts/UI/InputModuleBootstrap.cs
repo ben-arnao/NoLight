@@ -1,11 +1,12 @@
 using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.Scripting;
 #if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
-// using UnityEngine.InputSystem; // Uncomment if assigning actions asset in code
 #endif
 
 namespace RogueLike2D.UI
@@ -180,11 +181,42 @@ namespace RogueLike2D.UI
             {
                 if (uim.actionsAsset == null)
                 {
-                    // Create the default UI actions asset (covers basic mouse, keyboard, gamepad input).
-                    // The previous API "LoadDefaultActions" was removed in newer Input System versions,
-                    // so we now generate the asset at runtime using the provided helper.
-                    uim.actionsAsset = InputSystemUIInputModule.CreateDefaultActions();
-                    Debug.Log("[InputModuleBootstrap] Assigned default UI actions asset to InputSystemUIInputModule");
+                    // Attempt to obtain the default UI actions asset in a version-agnostic manner.
+                    // - In recent Input System versions, CreateDefaultActions() is available.
+                    // - In older versions, the API was named LoadDefaultActions().
+                    // We use reflection so the project compiles regardless of which method exists.
+                    var uimType = typeof(InputSystemUIInputModule);
+                    InputActionAsset asset = null;
+
+                    var createMethod = uimType.GetMethod(
+                        "CreateDefaultActions",
+                        BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+                    if (createMethod != null)
+                    {
+                        asset = createMethod.Invoke(null, null) as InputActionAsset;
+                        Debug.Log("[InputModuleBootstrap] Generated default UI actions via CreateDefaultActions()");
+                    }
+                    else
+                    {
+                        var loadMethod = uimType.GetMethod(
+                            "LoadDefaultActions",
+                            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+                        if (loadMethod != null)
+                        {
+                            asset = loadMethod.Invoke(null, null) as InputActionAsset;
+                            Debug.Log("[InputModuleBootstrap] Generated default UI actions via LoadDefaultActions()");
+                        }
+                    }
+
+                    if (asset != null)
+                    {
+                        uim.actionsAsset = asset;
+                        Debug.Log("[InputModuleBootstrap] Assigned default UI actions asset to InputSystemUIInputModule");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[InputModuleBootstrap] Unable to create default UI actions asset (method missing)");
+                    }
                 }
             }
             catch (Exception ex)
