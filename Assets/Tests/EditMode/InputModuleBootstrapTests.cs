@@ -24,8 +24,8 @@ public class InputModuleBootstrapTests
         Assert.IsNotNull(uim, "InputSystemUIInputModule should be present");
 
         // The helper should assign a default actions asset so the UI can process input.
-        // Internally this now uses InputSystemUIInputModule.CreateDefaultActions()
-        // because the older LoadDefaultActions API was removed.
+        // Internally this now uses whichever Input System helper is available
+        // (CreateDefaultActions or the legacy LoadDefaultActions).
         Assert.IsNotNull(uim.actionsAsset, "Expected a default actions asset to be assigned");
     }
 #endif
