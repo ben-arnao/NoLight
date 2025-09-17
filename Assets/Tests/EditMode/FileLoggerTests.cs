@@ -16,5 +16,6 @@ public class FileLoggerTests
 
         string contents = File.ReadAllText(path);
         StringAssert.Contains("BASELINE", contents, "Expected baseline marker not found in log file.");
+        StringAssert.Contains("Execution has entered the app", contents, "Expected startup marker not found in log file.");
     }
 }
