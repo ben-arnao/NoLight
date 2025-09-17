@@ -10,6 +10,7 @@ namespace RogueLike2D.Core
     public static class FileLogger
     {
         private static readonly object _lock = new object();
+        private const string StartupMarkerPhrase = "Execution has entered the app";
         private static StreamWriter _writer;
         private static string _logDir;
         private static string _logFilePath;
@@ -84,26 +85,32 @@ namespace RogueLike2D.Core
                 Application.quitting += OnQuitting;
 
                 WriteSessionHeader();
-
-                // Best-effort: write a startup marker directly to the file to make it obvious that the app attempted to start.
-                try
-                {
-                    lock (_lock)
-                    {
-                        if (_writer != null)
-                        {
-                            _writer.WriteLine($"[FileLogger] Startup logged at {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
-                            _writer.Flush();
-                        }
-                    }
-                }
-                catch { /* ignore */ }
+                WriteStartupMarker();
 
                 Debug.Log($"[FileLogger] Initialized. Writing to {_logFilePath}");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[FileLogger] Failed to initialize: {ex}");
+            }
+        }
+
+        private static void WriteStartupMarker()
+        {
+            try
+            {
+                lock (_lock)
+                {
+                    if (_writer == null) return;
+
+                    string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                    _writer.WriteLine($"[STARTUP][{timestamp}] {StartupMarkerPhrase}. Log file: {_logFilePath}");
+                    _writer.Flush();
+                }
+            }
+            catch (Exception markerEx)
+            {
+                Debug.LogWarning($"[FileLogger] Failed to write startup marker: {markerEx}");
             }
         }
 
