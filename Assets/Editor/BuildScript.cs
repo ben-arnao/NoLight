@@ -1,6 +1,7 @@
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 
 namespace RogueLike2D.Editor
@@ -21,7 +22,7 @@ namespace RogueLike2D.Editor
             if (scenes == null || scenes.Length == 0)
             {
                 Debug.LogError("No enabled scenes found in Build Settings. Aborting build.");
-                return;
+                throw new BuildFailedException("No enabled scenes found in Build Settings.");
             }
 
             const string outputDir = "Builds/Windows";
